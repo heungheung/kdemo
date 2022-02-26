@@ -1,15 +1,24 @@
 pipeline {
-  agent any
 
-  tools{
-    maven 'maven 3.6.1'
-  }
+  agent none
+//  agent {
+//    docker{
+//      image 'maven:3.6.1-jdk-8-slim'
+//      args '-v $HOME/.m2:/root/.m2'
+//    }
+//  }
 
   stages{
 
     stage("build"){
       when{
         changeset "**/worker/**"
+      }
+      agent{
+        docker{
+          image 'maven:3.6.1-jdk-8-slim'
+          args '-v $HOME/.m2:/root/.m2'
+        }
       }
       steps{
         echo 'Compiling worker app'
@@ -23,8 +32,14 @@ pipeline {
       when{
         changeset "**/worker/**"
       }
+      agent{
+        docker{
+          image 'maven:3.6.1-jdk-8-slim'
+          args '-v $HOME/.m2:/root/.m2'
+        }
+      }
       steps{
-        echo 'Running Unit Tets on worker app'
+        echo 'Running Unit Tests on worker app'
         dir('worker'){
           sh 'mvn clean test'
         }
@@ -36,6 +51,12 @@ pipeline {
         branch 'main'
         changeset "**/worker/**"
       }
+      agent{
+        docker{
+          image 'maven:3.6.1-jdk-8-slim'
+          args '-v $HOME/.m2:/root/.m2'
+        }
+      }
       steps{
         echo 'Packaging worker app'
         dir('worker'){
@@ -44,6 +65,25 @@ pipeline {
         }
       }
     }
+
+    stage('docker-package'){
+      agent any
+      when{
+        branch 'main'
+        changeset "**/worker/**"
+      }
+      steps{
+        echo 'Packaging worker app with docker'
+        script{
+          docker.withRegistry('https://iad.ocir.io/','ocir-apaccpt03-kenneth') {
+            def workerImage = docker.build("apaccpt03/kdemo/worker:v${env.BUILD_ID}", "./worker")
+            workerImage.push()
+            workerImage.push("latest")
+          }
+        }
+      }
+    }
+
   }
 
   post{
