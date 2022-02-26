@@ -40,6 +40,7 @@ pipeline {
         echo 'Packaging worker app'
         dir('worker'){
           sh 'mvn package'
+          archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
         }
       }
     }
@@ -54,7 +55,6 @@ pipeline {
       slackSend (channel: "kdemo-devops", message: "Build Failed - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
     }
     success{
-      archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
       slackSend (channel: "kdemo-devops", message: "Build Succeeded - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
     }
   }
