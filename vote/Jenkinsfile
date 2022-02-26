@@ -27,7 +27,7 @@ pipeline {
       steps{
         echo 'Running Unit Tests on vote app'
         dir('vote'){
-          sh 'nosetest -v'
+          sh 'nosetests -v'
         }
       }
     }
