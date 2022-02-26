@@ -75,8 +75,8 @@ pipeline {
       steps{
         echo 'Packaging worker app with docker'
         script{
-          docker.withRegistry('https://iad.ocir.io/','ocir-apaccpt03-kenneth') {
-            def workerImage = docker.build("apaccpt03/kdemo/worker:v${env.BUILD_ID}", "./worker")
+          docker.withRegistry('https://index.docker.io/v1/','dockerhub-heungheung') {
+            def workerImage = docker.build("kennethheung/worker:v${env.BUILD_ID}", "./worker")
             workerImage.push()
             workerImage.push("latest")
           }
