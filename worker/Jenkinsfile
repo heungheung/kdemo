@@ -57,6 +57,5 @@ pipeline {
       archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
       slackSend (channel: "kdemo-devops", message: "Build Succeeded - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
     }
-    }
   }
 }
