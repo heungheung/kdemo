@@ -1,16 +1,17 @@
 pipeline {
-  agent any
-
-  tools{
-    maven 'maven 3.6.1'
+  agent {
+    docker{
+      image 'maven:3.6.1-jdk-8-slim'
+      args '-v $HOME/.m2:/root/.m2'
+    }
   }
 
   stages{
 
     stage("build"){
-      when{
-        changeset "**/worker/**"
-      }
+//      when{
+//        changeset "**/worker/**"
+//      }
       steps{
         echo 'Compiling worker app'
         dir('worker'){
@@ -20,11 +21,11 @@ pipeline {
     }
 
     stage("test"){
-      when{
-        changeset "**/worker/**"
-      }
+//      when{
+//        changeset "**/worker/**"
+//      }
       steps{
-        echo 'Running Unit Tets on worker app'
+        echo 'Running Unit Tests on worker app'
         dir('worker'){
           sh 'mvn clean test'
         }
@@ -32,10 +33,10 @@ pipeline {
     }
 
     stage("package"){
-      when{
-        branch 'main'
-        changeset "**/worker/**"
-      }
+//      when{
+//        branch 'main'
+//        changeset "**/worker/**"
+//      }
       steps{
         echo 'Packaging worker app'
         dir('worker'){
