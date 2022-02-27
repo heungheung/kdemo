@@ -1,12 +1,6 @@
 pipeline {
 
   agent none
-//  agent {
-//    docker{
-//      image 'maven:3.6.1-jdk-8-slim'
-//      args '-v $HOME/.m2:/root/.m2'
-//    }
-//  }
 
   stages{
 
@@ -69,19 +63,28 @@ pipeline {
     stage('docker-package'){
       agent any
       when{
-        branch 'main'
+//        branch 'main'
         changeset "**/worker/**"
       }
       steps{
         echo 'Packaging worker app with docker'
-        script{
-          docker.withRegistry('https://index.docker.io/v1/','dockerhub-heungheung') {
-            def workerImage = docker.build("kennethheung/worker:v${env.BUILD_ID}", "./worker")
-            workerImage.push()
-            workerImage.push("latest")
+        dir('worker'){
+          script {
+            def props = readProperties file: '/var/lib/jenkins/secrets/ocir.properties'
+            env.u = props.u
+            env.p = props.p
           }
+          sh 'docker build -f Dockerfile -t iad.ocir.io/apaccpt03/kdemo/worker:v${BUILD_ID} .'
+          sh 'docker tag iad.ocir.io/apaccpt03/kdemo/worker:v${BUILD_ID} iad.ocir.io/apaccpt03/kdemo/worker:latest'
+          sh "docker login -u $u -p \'$p\'  https://iad.ocir.io/"
+          sh 'docker push iad.ocir.io/apaccpt03/kdemo/worker:v${BUILD_ID}'
+          sh 'docker push iad.ocir.io/apaccpt03/kdemo/worker:latest'
+          sh 'docker logout'
         }
+
+
       }
+
     }
 
   }
