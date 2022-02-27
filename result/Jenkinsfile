@@ -1,15 +1,16 @@
 pipeline {
-  agent any
-
-  tools{
-    nodejs 'NodeJS'
-  }
+  agent none
 
   stages{
 
     stage("build"){
       when{
         changeset "**/result/**"
+      }
+      agent{
+        docker{
+          image 'node:8.16.0-alpine'
+        }
       }
       steps{
         echo 'Compiling result app'
@@ -23,6 +24,11 @@ pipeline {
       when{
         changeset "**/result/**"
       }
+      agent{
+        docker{
+          image 'node:8.16.0-alpine'
+        }
+      }
       steps{
         echo 'Running Unit Tests on result app'
         dir('result'){
@@ -32,6 +38,30 @@ pipeline {
       }
     }
 
+    stage('docker-package'){
+      agent any
+      when{
+//        branch 'main'
+        changeset "**/result/**"
+      }
+      steps{
+        echo 'Packaging result app with docker'
+        dir('result'){
+          script {
+            def props = readProperties file: '/var/lib/jenkins/secrets/ocir.properties'
+            env.u = props.u
+            env.p = props.p
+          }
+          sh 'docker build -f Dockerfile -t iad.ocir.io/apaccpt03/result:v${env.BUILD_ID}'
+          sh 'docker tag iad.ocir.io/apaccpt03/result:v${env.BUILD_ID} iad.ocir.io/apaccpt03/result:latest'
+          sh "docker login -u $u -p \'$p\'  https://iad.ocir.io/"
+          sh 'docker push iad.ocir.io/apaccpt03/result:v${env.BUILD_ID}'
+          sh 'docker push iad.ocir.io/apaccpt03/result:latest'
+          sh 'docker logout'
+        }
+
+      }
+    }
 
   }
 

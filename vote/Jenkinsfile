@@ -1,4 +1,5 @@
 pipeline {
+  agent none
   agent {
     docker{
       image 'python:2.7.16-slim'
@@ -12,6 +13,12 @@ pipeline {
       when{
         changeset "**/vote/**"
       }
+      agent {
+        docker{
+          image 'python:2.7.16-slim'
+          args '--user root'
+        }
+      }
       steps{
         echo 'Compiling vote app'
         dir('vote'){
@@ -24,10 +31,41 @@ pipeline {
       when{
         changeset "**/vote/**"
       }
+      agent {
+        docker{
+          image 'python:2.7.16-slim'
+          args '--user root'
+        }
+      }
       steps{
         echo 'Running Unit Tests on vote app'
         dir('vote'){
+          sh 'pip install -r requirements.txt'
           sh 'nosetests -v'
+        }
+      }
+    }
+
+    stage('docker-package'){
+      agent any
+      when{
+//        branch 'main'
+        changeset "**/vote/**"
+      }
+      steps{
+        echo 'Packaging vote app with docker'
+        dir('vote'){
+          script {
+            def props = readProperties file: '/var/lib/jenkins/secrets/ocir.properties'
+            env.u = props.u
+            env.p = props.p
+          }
+          sh 'docker build -f Dockerfile -t iad.ocir.io/apaccpt03/vote:v${env.BUILD_ID}'
+          sh 'docker tag iad.ocir.io/apaccpt03/vote:v${env.BUILD_ID} iad.ocir.io/apaccpt03/vote:latest'
+          sh "docker login -u $u -p \'$p\'  https://iad.ocir.io/"
+          sh 'docker push iad.ocir.io/apaccpt03/vote:v${env.BUILD_ID}'
+          sh 'docker push iad.ocir.io/apaccpt03/vote:latest'
+          sh 'docker logout'
         }
       }
     }
