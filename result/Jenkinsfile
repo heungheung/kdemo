@@ -54,8 +54,8 @@ pipeline {
             env.u = props.u
             env.p = props.p
           }
-          sh 'docker build -f Dockerfile -t iad.ocir.io/apaccpt03/result:v${env.BUILD_ID}'
-          sh 'docker tag iad.ocir.io/apaccpt03/result:v${env.BUILD_ID} iad.ocir.io/apaccpt03/result:latest'
+          sh 'docker build -f Dockerfile -t iad.ocir.io/apaccpt03/result:v${BUILD_ID}'
+          sh 'docker tag iad.ocir.io/apaccpt03/result:v${BUILD_ID} iad.ocir.io/apaccpt03/result:latest'
           sh "docker login -u $u -p \'$p\'  https://iad.ocir.io/"
           sh 'docker push iad.ocir.io/apaccpt03/result:v${env.BUILD_ID}'
           sh 'docker push iad.ocir.io/apaccpt03/result:latest'
