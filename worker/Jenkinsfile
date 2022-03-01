@@ -73,6 +73,7 @@ pipeline {
             def props = readProperties file: '/var/lib/jenkins/secrets/ocir.properties'
             env.u = props.u
             env.p = props.p
+
           }
           sh 'docker build -f Dockerfile -t iad.ocir.io/apaccpt03/kdemo/worker:v${BUILD_ID} .'
           sh 'docker tag iad.ocir.io/apaccpt03/kdemo/worker:v${BUILD_ID} iad.ocir.io/apaccpt03/kdemo/worker:latest'
