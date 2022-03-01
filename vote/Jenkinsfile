@@ -5,37 +5,37 @@ pipeline {
 
     stage("build"){
       when{
-        changeset "**/result/**"
+        changeset "**/vote/**"
       }
-      environment { HOME="." }
-      agent{
+      agent {
         docker{
-          image 'node:8.16.0-alpine'
+          image 'python:2.7.16-slim'
+          args '--user root'
         }
       }
       steps{
-        echo 'Compiling result app'
-        dir('result'){
-          sh 'npm install'
+        echo 'Compiling vote app'
+        dir('vote'){
+          sh 'pip install -r requirements.txt'
         }
       }
     }
 
     stage("test"){
       when{
-        changeset "**/result/**"
+        changeset "**/vote/**"
       }
-      environment { HOME="." }
-      agent{
+      agent {
         docker{
-          image 'node:8.16.0-alpine'
+          image 'python:2.7.16-slim'
+          args '--user root'
         }
       }
       steps{
-        echo 'Running Unit Tests on result app'
-        dir('result'){
-          sh 'npm install'
-          sh 'npm test'
+        echo 'Running Unit Tests on vote app'
+        dir('vote'){
+          sh 'pip install -r requirements.txt'
+          sh 'nosetests -v'
         }
       }
     }
@@ -44,33 +44,33 @@ pipeline {
       agent any
       when{
 //        branch 'main'
-        changeset "**/result/**"
+        changeset "**/vote/**"
       }
       steps{
-        echo 'Packaging result app with docker'
-        dir('result'){
+        echo 'Packaging vote app with docker'
+        dir('vote'){
           script {
             def props = readProperties file: '/var/lib/jenkins/secrets/ocir.properties'
             env.u = props.u
             env.p = props.p
           }
-          sh 'docker build -f Dockerfile -t iad.ocir.io/apaccpt03/kdemo/result:v${BUILD_ID} .'
-          sh 'docker tag iad.ocir.io/apaccpt03/kdemo/result:v${BUILD_ID} iad.ocir.io/apaccpt03/kdemo/result:latest'
+          sh 'docker build -f Dockerfile -t iad.ocir.io/apaccpt03/kdemo/vote:v${BUILD_ID} .'
+          sh 'docker tag iad.ocir.io/apaccpt03/kdemo/vote:v${BUILD_ID} iad.ocir.io/apaccpt03/kdemo/vote:latest'
           sh "docker login -u $u -p \'$p\'  https://iad.ocir.io/"
-          sh 'docker push iad.ocir.io/apaccpt03/kdemo/result:v${BUILD_ID}'
-          sh 'docker push iad.ocir.io/apaccpt03/kdemo/result:latest'
+          sh 'docker push iad.ocir.io/apaccpt03/kdemo/vote:v${BUILD_ID}'
+          sh 'docker push iad.ocir.io/apaccpt03/kdemo/vote:latest'
           sh 'docker logout'
         }
-
       }
     }
+
 
   }
 
   post{
     always{
 
-      echo 'Building multibranch pipeline for result app is completed..'
+      echo 'Building multibranch pipeline for vote app is completed..'
     }
     failure{
       slackSend (channel: "kdemo-devops", message: "Build Failed - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
